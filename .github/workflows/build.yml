@@ -22,10 +22,16 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore
-        run: dotnet restore AmongUsUnknownImpostors.sln
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet restore AmongUsUnknownImpostors.sln 2>&1 | tee restore.log || { grep -E "error|NU1" restore.log | head -30 | sed 's/^/::error::/'; exit 1; }
 
       - name: Build (Release)
-        run: dotnet build AmongUsUnknownImpostors.sln -c Release --no-restore
+        shell: bash
+        run: |
+          set -o pipefail
+          dotnet build AmongUsUnknownImpostors.sln -c Release --no-restore 2>&1 | tee build.log || { grep -E ": error " build.log | sort -u | head -40 | sed 's/^/::error::/'; exit 1; }
 
       - name: Upload DLL
         uses: actions/upload-artifact@v4
