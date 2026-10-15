@@ -5,7 +5,7 @@
     <GameVersion>2025.6.12</GameVersion>
     <Description>Among Us mod that hides the impostors and allows them to kill each other</Description>
     <Authors>Herysia</Authors>
-    <AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
+    <AmongUs Condition="'$(AmongUs)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +18,7 @@
     </Reference>
   </ItemGroup>
 
-  <Target Name="Copy" AfterTargets="Reobfuscate">
+  <Target Name="Copy" AfterTargets="Reobfuscate" Condition="Exists('$(AmongUs)\BepInEx\plugins')">
     <Copy
       SourceFiles="$(OutputPath)reobfuscated/$(AssemblyName)-$(GameVersion).dll"
       DestinationFolder="$(AmongUs)\BepInEx\plugins\" />
