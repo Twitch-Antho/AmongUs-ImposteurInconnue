@@ -52,8 +52,15 @@ internal static class HideImpostors
             foreach (var voteArea in MeetingHud.Instance.playerStates)
             {
                 if (!voteArea || !voteArea.NameText) continue;
-                if (IsOtherImpostor(GameData.Instance.GetPlayerById(voteArea.TargetPlayerId)))
-                    voteArea.NameText.color = Color.white;
+                var name = voteArea.NameText.text;
+                foreach (var player in PlayerControl.AllPlayerControls)
+                {
+                    if (player && player.Data != null && player.Data.PlayerName == name && IsOtherImpostor(player.Data))
+                    {
+                        voteArea.NameText.color = Color.white;
+                        break;
+                    }
+                }
             }
         }
     }
