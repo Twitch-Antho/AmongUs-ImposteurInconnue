@@ -32,7 +32,7 @@ Ce mod a été réalisé à l'aide du [framework de modding Reactor](https://git
 
 Tous les joueurs doivent avoir installé le mod pour la meilleure expérience utilisateur
 
--   Téléchargez le [dernière version](https://github.com/AnthoYt/AmongUsUnknownImpostors/releases).
+-   Téléchargez la [dernière version](https://github.com/Twitch-Antho/AmongUs-ImposteurInconnue/releases/latest) : `ImposteurInconnu-Steam-Itch.zip` pour Steam/Itch, `ImposteurInconnu-Epic-MicrosoftStore.zip` pour Epic/Microsoft Store.
 -   Extraire les fichiers dans le dossier du jeu Among Us (`steam/steamapps/common/Among us`)
 -   Cela devrait ressembler à ceci
     ![looklikethis](./Visuals/looklikethis.png)
@@ -40,7 +40,7 @@ Tous les joueurs doivent avoir installé le mod pour la meilleure expérience ut
 
 ### Remarque relative à l'installation
 
-Si vous souhaitez installer Reactor par vous-même, installez [BepInEx 6 IL2CPP be.735](https://builds.bepinex.dev/projects/bepinex_be) (x86 pour Steam/Itch, x64 pour Epic/Microsoft Store), puis [Reactor](https://github.com/NuclearPowered/Reactor/releases) dans `BepInEx/plugins`. Et puis copiez la dll du plugin (de [releases](https://github.com/AnthoYt/AmongUsUnknownImpostors/releases)) dans `Among us/BepInEx/plugins`
+Si vous souhaitez installer Reactor par vous-même, installez [BepInEx 6 IL2CPP be.735](https://builds.bepinex.dev/projects/bepinex_be) (x86 pour Steam/Itch, x64 pour Epic/Microsoft Store), puis [Reactor](https://github.com/NuclearPowered/Reactor/releases) dans `BepInEx/plugins`. Et puis copiez la dll du plugin (`AmongUsUnknownImpostors.dll` dans les [releases](https://github.com/Twitch-Antho/AmongUs-ImposteurInconnue/releases/latest)) dans `Among us/BepInEx/plugins`
 Si vous souhaitez jouer sur des serveurs officiels, vous devez alors désactiver l'option de handshake personnalisé à partir de : `Among us/BepInEx/config/gg.reactor.api.cfg`
 
 ### Désinstaller
