@@ -5,19 +5,24 @@
     <GameVersion>2025.6.12</GameVersion>
     <Description>Among Us mod that hides the impostors and allows them to kill each other</Description>
     <Authors>Herysia</Authors>
+
+    <!-- Default Among Us install path if not provided via -p:AmongUs -->
     <AmongUs Condition="'$(AmongUs)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Reactor MSBuild helper for reobfuscation -->
     <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="2.7.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- CI/Local: expect LobbyOptionsAPI to be available at repository root as 'LobbyOptionsAPI' -->
     <Reference Include="LobbyOptionsAPI">
-      <HintPath>..\..\LobbyOptionsAPI\LobbyOptionsAPI\bin\Release\netstandard2.1\reobfuscated\LobbyOptionsAPI-2025.6.12.dll</HintPath>
+      <HintPath>../LobbyOptionsAPI/LobbyOptionsAPI/bin/Release/netstandard2.1/reobfuscated/LobbyOptionsAPI-2025.6.12.dll</HintPath>
     </Reference>
   </ItemGroup>
 
+  <!-- Copy the reobfuscated DLL into the game's BepInEx/plugins only when that folder exists -->
   <Target Name="Copy" AfterTargets="Reobfuscate" Condition="Exists('$(AmongUs)\BepInEx\plugins')">
     <Copy
       SourceFiles="$(OutputPath)reobfuscated/$(AssemblyName)-$(GameVersion).dll"
