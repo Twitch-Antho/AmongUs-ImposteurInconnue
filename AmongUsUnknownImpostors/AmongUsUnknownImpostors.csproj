@@ -1,39 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-
-    <!-- Version du mod -->
     <Version>1.3.0</Version>
-
-    <!-- Version actuelle du jeu (mise à jour 2025.6.x) -->
     <GameVersion>2025.6.12</GameVersion>
-
-    <!-- Dernière version stable des mappings Reactor/NuclearPowered -->
-    <Mappings>NuclearPowered/Mappings:0.6.3</Mappings>
-
     <Description>Among Us mod that hides the impostors and allows them to kill each other</Description>
     <Authors>Herysia</Authors>
+    <AmongUs>C:\Program Files (x86)\Steam\steamapps\common\Among Us</AmongUs>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Reactor pour la déobfuscation -->
-    <Deobfuscate Include="$(AmongUs)\BepInEx\plugins\Reactor-$(GameVersion).dll" />
-
-    <!-- OxygenFilter MSBuild : dernière version compatible 2025 -->
     <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="2.7.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Dernière version du LobbyOptionsAPI compilée pour la mise à jour 2025.6.x -->
     <Reference Include="LobbyOptionsAPI">
       <HintPath>..\..\LobbyOptionsAPI\LobbyOptionsAPI\bin\Release\netstandard2.1\reobfuscated\LobbyOptionsAPI-2025.6.12.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <Target Name="Copy" AfterTargets="Reobfuscate">
-    <!-- Copie du mod reobfusqué dans le dossier plugins -->
-    <Copy 
-      SourceFiles="$(OutputPath)reobfuscated/$(AssemblyName)-$(GameVersion).dll" 
-      DestinationFolder="$(AmongUs)/BepInEx/plugins/" />
+    <Copy
+      SourceFiles="$(OutputPath)reobfuscated/$(AssemblyName)-$(GameVersion).dll"
+      DestinationFolder="$(AmongUs)\BepInEx\plugins\" />
   </Target>
 </Project>
