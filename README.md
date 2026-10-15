@@ -5,11 +5,24 @@ ATTENTION ⚠️ | ANNONCE !
 
 ## Caractères
 
--  Les imposteurs ne se connaissent pas
+-  Les imposteurs ne se connaissent pas (intro, noms, réunions et chat)
 -  Les imposteurs peuvent s'entre-tuer
--  Les imposteurs sont touchés par le sabotage des lumières (cela peut être personnalisé individuellement dans les paramètres du lobby)
--  Le module peut être désactivé à partir d'une commande du lobby et sera automatiquement désactivé si l'hôte n'a pas installé le mod.
-- Vous permet de modifier la carte et le nombre d'imposteurs depuis le lobby du jeu.
+-  Les imposteurs sont touchés par le sabotage des lumières, avec une vision réglable
+-  Le mode est réglé par l'hôte depuis le chat du lobby et se désactive automatiquement si l'hôte n'a pas le mod
+
+## Version
+
+Compatible avec **Among Us 2026.9.29** (Steam), **BepInEx 6.0.0-be.735 (IL2CPP)** et **Reactor 2.5.1**.
+
+## Commandes du lobby (hôte)
+
+| Commande | Effet |
+|---|---|
+| `/inconnu` | Affiche les réglages actuels |
+| `/inconnu on` / `/inconnu off` | Active ou désactive le mode |
+| `/inconnu vision 1.5` | Vision des imposteurs quand les lumières sont coupées (0.25 à 5) |
+
+Les réglages sont aussi enregistrés dans `BepInEx/config/com.herysia.amongusunkimpostor.cfg`.
 
 ## Technique
 
@@ -27,8 +40,7 @@ Tous les joueurs doivent avoir installé le mod pour la meilleure expérience ut
 
 ### Remarque relative à l'installation
 
-Si vous souhaitez installer Reactor par vous-même, veuillez suivre les [BepInEx](https://docs.reactor.gg/docs/basic/install_bepinex) instructions d'installation, puis
- [Reactor](https://docs.reactor.gg/docs/basic/install_reactor). Et puis copiez la dll du plugin (de [releases](https://github.com/AnthoYt/AmongUsUnknownImpostors/releases)) dans `Among us/BepInEx/plugins`
+Si vous souhaitez installer Reactor par vous-même, installez [BepInEx 6 IL2CPP be.735](https://builds.bepinex.dev/projects/bepinex_be) (x86 pour Steam/Itch, x64 pour Epic/Microsoft Store), puis [Reactor](https://github.com/NuclearPowered/Reactor/releases) dans `BepInEx/plugins`. Et puis copiez la dll du plugin (de [releases](https://github.com/AnthoYt/AmongUsUnknownImpostors/releases)) dans `Among us/BepInEx/plugins`
 Si vous souhaitez jouer sur des serveurs officiels, vous devez alors désactiver l'option de handshake personnalisé à partir de : `Among us/BepInEx/config/gg.reactor.api.cfg`
 
 ### Désinstaller
@@ -41,7 +53,8 @@ Si vous souhaitez désinstaller complètement Reactor/BepInEx, supprimez les fic
 
 ```
 +-- BepInEx
-+-- mono
++-- dotnet
++-- .doorstop_version
 +-- changelog.txt
 +-- doorstop_config.ini
 +-- winhttp.dll

@@ -1,51 +1,30 @@
-using System;
+using AmongUs.GameOptions;
 using HarmonyLib;
 using UnityEngine;
 
-namespace AmongUsUnknownImpostors.Patches
+namespace AmongUsUnknownImpostors.Patches;
+
+/// <summary>
+/// Les imposteurs subissent aussi le sabotage des lumières, avec leur propre multiplicateur
+/// de vision quand tout est coupé (réglable avec /inconnu vision).
+/// </summary>
+[HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CalculateLightRadius))]
+internal static class LightSabotageFix
 {
-    class LightSabotageFix
+    public static bool Prefix(ShipStatus __instance, [HarmonyArgument(0)] NetworkedPlayerInfo player, ref float __result)
     {
-        [HarmonyPatch(typeof(ShipStatus), nameof(ShipStatus.CalculateLightRadius))]
-        public static class ShipStatus_CalculateLightRadius
-        {
-            public static bool Prefix(ShipStatus __instance, GameData.PlayerInfo playerInfo, ref float __result)
-            {
-                // Si l'option "Unk impostor" est désactivée, on laisse la méthode originale s'exécuter
-                if (!CustomGameOptionsData.customGameOptions.unkImpostor.value) return true;
+        if (!UnknownImpostorsSettings.Active) return true;
+        if (player == null || player.IsDead || !player.Role || !player.Role.IsImpostor) return true;
 
-                // On vérifie que le joueur existe et s'il est mort
-                if (playerInfo == null || playerInfo.IsDead)
-                {
-                    __result = __instance.MaxLightRadius;
-                    return false; // On empêche l'exécution de la méthode originale
-                }
+        if (!__instance.Systems.ContainsKey(SystemTypes.Electrical)) return true;
+        var switchSystem = __instance.Systems[SystemTypes.Electrical].TryCast<SwitchSystem>();
+        if (switchSystem == null) return true;
 
-                // Récupération du système électrique
-                if (__instance.Systems[SystemTypes.Electrical] is SwitchSystem switchSystem)
-                {
-                    // Calcul du facteur d'intensité des lumières basé sur l'état du système électrique
-                    float lightFactor = (float)switchSystem.Value / 255f;
+        float lightFactor = switchSystem.Value / 255f;
+        float impostorLightMod = GameOptionsManager.Instance.CurrentGameOptions.GetFloat(FloatOptionNames.ImpostorLightMod);
 
-                    if (playerInfo.IsImpostor)
-                    {
-                        // Calcul de la lumière pour les imposteurs
-                        __result = Mathf.Lerp(__instance.MinLightRadius, __instance.MaxLightRadius, lightFactor) *
-                                   Mathf.Lerp(CustomGameOptionsData.customGameOptions.impoVision.value, PlayerControl.GameOptions.ImpostorLightMod, lightFactor);
-                    }
-                    else
-                    {
-                        // Calcul de la lumière pour les membres de l'équipage
-                        __result = Mathf.Lerp(__instance.MinLightRadius, __instance.MaxLightRadius, lightFactor) *
-                                   PlayerControl.GameOptions.CrewLightMod;
-                    }
-
-                    return false; // On empêche l'exécution de la méthode originale
-                }
-
-                // Si le système électrique n'est pas valide, on laisse la méthode originale s'exécuter
-                return true;
-            }
-        }
+        __result = Mathf.Lerp(__instance.MinLightRadius, __instance.MaxLightRadius, lightFactor)
+                   * Mathf.Lerp(UnknownImpostorsSettings.ImpostorLightOffVision, impostorLightMod, lightFactor);
+        return false;
     }
 }

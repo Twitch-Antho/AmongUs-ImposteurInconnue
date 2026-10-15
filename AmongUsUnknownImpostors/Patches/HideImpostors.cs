@@ -1,128 +1,101 @@
-using System;
 using HarmonyLib;
 using UnityEngine;
-using UnhollowerBaseLib;
 
-namespace AmongUsUnknownImpostors.Patches
+namespace AmongUsUnknownImpostors.Patches;
+
+internal static class HideImpostors
 {
-    internal class HideImpostors
+    private static bool LocalIsImpostor
     {
-        // Patch to hide impostors' names in chat
-        [HarmonyPatch(typeof(ChatController), nameof(ChatController.AddChat))]
-        public static class ChatController_AddChat
+        get
         {
-            public static void Postfix(ChatController __instance, ref PlayerControl KMCAKLLFNIM)
-            {
-                PlayerControl sourcePlayer = KMCAKLLFNIM;
+            var local = PlayerControl.LocalPlayer;
+            return local && local.Data != null && local.Data.Role && local.Data.Role.IsImpostor;
+        }
+    }
 
-                if (sourcePlayer == null || PlayerControl.LocalPlayer == null)
+    private static bool IsOtherImpostor(NetworkedPlayerInfo info)
+    {
+        return info != null && info.Role && info.Role.IsImpostor && info.PlayerId != PlayerControl.LocalPlayer.PlayerId;
+    }
+
+    // Intro : l'imposteur se voit seul dans son équipe.
+    [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.BeginImpostor))]
+    internal static class IntroCutscene_BeginImpostor
+    {
+        public static void Prefix([HarmonyArgument(0)] ref Il2CppSystem.Collections.Generic.List<PlayerControl> yourTeam)
+        {
+            if (!UnknownImpostorsSettings.Active) return;
+
+            yourTeam = new Il2CppSystem.Collections.Generic.List<PlayerControl>();
+            yourTeam.Add(PlayerControl.LocalPlayer);
+        }
+    }
+
+    // Noms au-dessus des joueurs et dans le vote : les autres imposteurs restent en blanc.
+    [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
+    internal static class HudManager_Update
+    {
+        public static void Postfix()
+        {
+            if (!UnknownImpostorsSettings.Active || !LocalIsImpostor) return;
+
+            foreach (var player in PlayerControl.AllPlayerControls)
+            {
+                if (!player || player == PlayerControl.LocalPlayer || !IsOtherImpostor(player.Data)) continue;
+                if (player.cosmetics && player.cosmetics.nameText)
+                    player.cosmetics.nameText.color = Color.white;
+            }
+
+            if (!MeetingHud.Instance) return;
+
+            foreach (var voteArea in MeetingHud.Instance.playerStates)
+            {
+                if (!voteArea || !voteArea.NameText) continue;
+                if (IsOtherImpostor(GameData.Instance.GetPlayerById(voteArea.TargetPlayerId)))
+                    voteArea.NameText.color = Color.white;
+            }
+        }
+    }
+
+    // Chat : le nom des autres imposteurs n'est plus rouge.
+    [HarmonyPatch(typeof(ChatBubble), nameof(ChatBubble.SetName))]
+    internal static class ChatBubble_SetName
+    {
+        public static void Postfix(ChatBubble __instance, [HarmonyArgument(0)] string playerName)
+        {
+            if (!UnknownImpostorsSettings.Active || !LocalIsImpostor || !__instance.NameText) return;
+            if (playerName == PlayerControl.LocalPlayer.Data.PlayerName) return;
+
+            foreach (var player in PlayerControl.AllPlayerControls)
+            {
+                if (player && player.Data != null && player.Data.PlayerName == playerName && IsOtherImpostor(player.Data))
                 {
+                    __instance.NameText.color = Color.white;
                     return;
                 }
-
-                GameData.PlayerInfo data = PlayerControl.LocalPlayer.Data;
-                GameData.PlayerInfo data2 = sourcePlayer.Data;
-                if (data2 == null || data == null || (data2.IsDead && !data.IsDead))
-                {
-                    return;
-                }
-
-                var activeChildren = __instance.chatBubPool.activeChildren;
-
-                // Cast the last chat bubble to the appropriate type
-                ChatBubble chatBubble = activeChildren[activeChildren.Count - 1].Cast<ChatBubble>();
-
-                // Hide impostors' names in chat if the player is an impostor
-                if (data2.IsImpostor && data2.Object != PlayerControl.LocalPlayer)
-                    chatBubble.NameText.Color = Color.white;
             }
         }
+    }
 
-        // Patch to make impostors alone in the intro cutscene
-        [HarmonyPatch(typeof(IntroCutscene), nameof(IntroCutscene.BeginImpostor))]
-        public static class IntroCutscene_BeginImpostor
+    // Les imposteurs peuvent se cibler (et donc s'entre-tuer).
+    [HarmonyPatch(typeof(RoleBehaviour), nameof(RoleBehaviour.IsValidTarget))]
+    internal static class RoleBehaviour_IsValidTarget
+    {
+        public static bool Prefix(RoleBehaviour __instance, NetworkedPlayerInfo target, ref bool __result)
         {
-            public static void Prefix(IntroCutscene __instance, ref Il2CppSystem.Collections.Generic.List<PlayerControl> KADFCNPGKLO)
-            {
-                if (!CustomGameOptionsData.customGameOptions.unkImpostor.value) return;
+            if (!UnknownImpostorsSettings.Active || !__instance.IsImpostor || !__instance.Player) return true;
 
-                var yourTeam = KADFCNPGKLO;
-                yourTeam.Clear();
-                yourTeam.Add(PlayerControl.LocalPlayer);  // Only the local player is considered an impostor
-            }
-        }
-
-        // Patch to hide other impostors in the meeting HUD
-        [HarmonyPatch(typeof(MeetingHud), nameof(MeetingHud.Method_7))]
-        public static class MeetingHud_CreateButton
-        {
-            public static void Postfix(MeetingHud __instance, GameData.PlayerInfo PPIKPNJEAKJ, ref PlayerVoteArea __result)
-            {
-                if (!CustomGameOptionsData.customGameOptions.unkImpostor.value) return;
-
-                GameData.PlayerInfo playerInfo = PPIKPNJEAKJ;
-                if (playerInfo.IsImpostor && playerInfo.Object != PlayerControl.LocalPlayer)
-                    __result.NameText.Color = Color.white;  // Hide impostors' names in the meeting HUD
-            }
-        }
-
-        // Patch to fix the kill button between impostors
-        [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FindClosestTarget))]
-        public static class PlayerControl_FindClosestTarget
-        {
-            private static int ShipAndObjectsMask = LayerMask.GetMask(new string[] { "Ship", "Objects" });
-
-            public static bool Prefix(PlayerControl __instance, ref PlayerControl __result)
-            {
-                if (!CustomGameOptionsData.customGameOptions.unkImpostor.value) return true;
-
-                PlayerControl result = null;
-                float num = GameOptionsData.KillDistances[Mathf.Clamp(PlayerControl.GameOptions.KillDistance, 0, 2)];
-                if (!ShipStatus.Instance) return true;
-
-                Vector2 truePosition = __instance.GetTruePosition();
-                for (int i = 0; i < GameData.Instance.AllPlayers.Count; i++)
-                {
-                    GameData.PlayerInfo playerInfo = GameData.Instance.AllPlayers[i];
-                    if (!playerInfo.Disconnected && playerInfo.PlayerId != __instance.PlayerId && !playerInfo.IsDead)
-                    {
-                        PlayerControl @object = playerInfo.Object;
-                        if (@object)
-                        {
-                            Vector2 vector = @object.GetTruePosition() - truePosition;
-                            float magnitude = vector.magnitude;
-                            if (magnitude <= num && !PhysicsHelpers.AnyNonTriggersBetween(truePosition, vector.normalized, magnitude, ShipAndObjectsMask))
-                            {
-                                result = @object;
-                                num = magnitude;
-                            }
-                        }
-                    }
-                }
-
-                __result = result;
-                return false;  // Prevent the original method from executing
-            }
-        }
-
-        // Patch to set player name color when impostors are chosen
-        [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.SetInfected))]
-        public static class PlayerControl_RpcSetInfected
-        {
-            public static void Postfix(PlayerControl __instance, Il2CppStructArray<byte> JPGEIBIBJPJ)
-            {
-                if (!CustomGameOptionsData.customGameOptions.unkImpostor.value) return;
-
-                var infected = JPGEIBIBJPJ;
-                for (int j = 0; j < infected.Length; j++)
-                {
-                    GameData.PlayerInfo playerById2 = GameData.Instance.GetPlayerById(infected[j]);
-                    if (playerById2 != null && playerById2.Object != PlayerControl.LocalPlayer)
-                    {
-                        playerById2.Object.nameText.Color = Color.white;  // Hide impostors' names in the game
-                    }
-                }
-            }
+            __result = target != null
+                       && !target.Disconnected
+                       && !target.IsDead
+                       && target.PlayerId != __instance.Player.PlayerId
+                       && target.Role
+                       && target.Object
+                       && !target.Object.inVent
+                       && !target.Object.inMovingPlat
+                       && target.Object.Visible;
+            return false;
         }
     }
 }
