@@ -1,16 +1,50 @@
-  - name: Setup .NET
-    uses: actions/setup-dotnet@v4
-    with:
-      dotnet-version: '6.0.x'
+name: Build mod
 
-  - name: Restore
-    run: dotnet restore AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
-  - name: Build (Release)
-    run: dotnet build AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj -c Release
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  - name: Upload DLL artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: mod-dll
-      path: AmongUsUnknownImpostors/bin/Release/**/reobfuscated/*.dll
+      - name: Checkout LobbyOptionsAPI
+        uses: actions/checkout@v4
+        with:
+          repository: Herysia/LobbyOptionsAPI
+          path: LobbyOptionsAPI
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore LobbyOptionsAPI
+        run: dotnet restore LobbyOptionsAPI/LobbyOptionsAPI.sln
+
+      - name: Build LobbyOptionsAPI (Release)
+        run: |
+          dotnet build LobbyOptionsAPI/LobbyOptionsAPI.sln -c Release
+          if (-not (Test-Path "LobbyOptionsAPI/LobbyOptionsAPI/bin/Release/netstandard2.1/reobfuscated")) {
+            New-Item -ItemType Directory -Force -Path "LobbyOptionsAPI/LobbyOptionsAPI/bin/Release/netstandard2.1/reobfuscated" | Out-Null
+          }
+          Get-ChildItem "LobbyOptionsAPI/LobbyOptionsAPI/bin/Release/netstandard2.1" -Filter *.dll | ForEach-Object {
+            Copy-Item $_.FullName "LobbyOptionsAPI/LobbyOptionsAPI/bin/Release/netstandard2.1/reobfuscated/LobbyOptionsAPI-2025.6.12.dll" -Force
+          }
+
+      - name: Restore main project
+        run: dotnet restore AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj
+
+      - name: Build main project (Release)
+        run: dotnet build AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj -c Release
+
+      - name: Upload reobfuscated DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mod-dll
+          path: AmongUsUnknownImpostors/bin/Release/**/reobfuscated/*.dll
