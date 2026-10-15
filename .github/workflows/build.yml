@@ -1,0 +1,16 @@
+  - name: Setup .NET
+    uses: actions/setup-dotnet@v4
+    with:
+      dotnet-version: '6.0.x'
+
+  - name: Restore
+    run: dotnet restore AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj
+
+  - name: Build (Release)
+    run: dotnet build AmongUsUnknownImpostors/AmongUsUnknownImpostors.csproj -c Release
+
+  - name: Upload DLL artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: mod-dll
+      path: AmongUsUnknownImpostors/bin/Release/**/reobfuscated/*.dll
